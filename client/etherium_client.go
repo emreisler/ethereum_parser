@@ -22,11 +22,9 @@ type ethereumClient struct {
 }
 
 func NewEthereumClient(url string) EthereumClient {
-	client := &ethereumClient{
+	return &ethereumClient{
 		url: url,
 	}
-
-	return client
 }
 
 func (e *ethereumClient) GetCurrentBlockNumber() (int, error) {
