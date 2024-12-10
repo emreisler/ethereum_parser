@@ -59,7 +59,7 @@ func (p *ethParser) GetTransactions(address string) []domain.Transaction {
 	return transactions
 }
 
-// check last parsed currentBlock and populate storage with missing transactions
+// check last parsed block and populate storage with missing transactions
 func (p *ethParser) handleBlockUpdates(blocksChan <-chan int) {
 	for newBlock := range blocksChan {
 		if newBlock >= p.currentBlock {
@@ -84,6 +84,7 @@ func (p *ethParser) populateTxs(block int) error {
 
 }
 
+// addToObserver check the retrieved transaction belongs to any subscriber, if it is, add hash to the subscriber
 func (p *ethParser) addToObserver(tx *domain.Transaction) {
 	subscriberAddresses := p.subscriberRepo.GetSubscribers()
 	for _, subscriber := range subscriberAddresses {
@@ -95,6 +96,7 @@ func (p *ethParser) addToObserver(tx *domain.Transaction) {
 	}
 }
 
+// populateNewBlock fetch all transaction with details
 func (p *ethParser) populateNewBlock(block int) error {
 	txs, err := p.ethClient.GetTxObjects(block)
 	if err != nil {
@@ -110,6 +112,7 @@ func (p *ethParser) populateNewBlock(block int) error {
 	return nil
 }
 
+// populateExistingBlock fetch just transaction hashes and retrieve complete transaction if the hash does not exist in storage
 func (p *ethParser) populateExistingBlock(block int) error {
 	txHashes, err := p.ethClient.GetTxHashes(block)
 	if err != nil {
