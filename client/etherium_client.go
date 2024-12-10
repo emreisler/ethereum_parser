@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/emreisler/ethereum_parser/domain"
-
 	"io/ioutil"
 	"net/http"
 )
@@ -31,7 +30,6 @@ func (e *ethereumClient) GetCurrentBlockNumber() (int, error) {
 	response := e.call("eth_blockNumber", nil)
 	var result string
 	if err := json.Unmarshal(response["result"], &result); err != nil {
-		fmt.Println("Error parsing block number:", err)
 		return 0, err
 	}
 	blockNumber := hexToInt(result)
@@ -47,7 +45,6 @@ func (e *ethereumClient) GetTxHashes(blockNumber int) ([]string, error) { //2137
 	}
 
 	if err := json.Unmarshal(response["result"], &block); err != nil {
-		fmt.Println("Error parsing block transactions:", err)
 		return nil, err
 	}
 
@@ -116,7 +113,6 @@ func (e *ethereumClient) call(method string, params []interface{}) map[string]js
 	return response
 }
 
-// Helper to convert hex string to int
 func hexToInt(hexStr string) int {
 	var i int
 	fmt.Sscanf(hexStr, "0x%x", &i)
