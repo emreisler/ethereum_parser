@@ -56,7 +56,7 @@ func (ph *parserHandler) HandleGetTransactions(w http.ResponseWriter, r *http.Re
 
 	transactions := ph.parser.GetTransactions(address)
 	if transactions == nil {
-		http.Error(w, "No transactions found for the provided address", http.StatusNotFound)
+		http.Error(w, "No transactions found for the provided address, please retry after 5 seconds", http.StatusNotFound)
 		return
 	}
 

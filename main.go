@@ -5,7 +5,7 @@ import (
 	"github.com/emreisler/ethereum_parser/client"
 	"github.com/emreisler/ethereum_parser/handlers"
 	"github.com/emreisler/ethereum_parser/repository"
-	"github.com/emreisler/ethereum_parser/usecases"
+	"github.com/emreisler/ethereum_parser/usecases/parser"
 	"log"
 	"net/http"
 )
@@ -15,7 +15,7 @@ func main() {
 	ethClient := client.NewEthereumClient("https://ethereum-rpc.publicnode.com")
 	txRepo := repository.NewInMemoryTxRepo()
 	subscriberRepo := repository.NewInMemorySubscriberRepo()
-	parser := usecases.NewEthereumParser(ethClient, txRepo, subscriberRepo)
+	parser := parser.NewEthereumParser(ethClient, txRepo, subscriberRepo)
 	handler := handlers.NewParserHandler(parser)
 
 	// Define routes
