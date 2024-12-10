@@ -5,31 +5,31 @@ import (
 	"sync"
 )
 
-type InMemoryTxRepo struct {
+type txRepo struct {
 	txs map[string]*domain.Transaction
 	mu  sync.RWMutex
 }
 
 func NewInMemoryTxRepo() TransactionRepository {
-	return &InMemoryTxRepo{
+	return &txRepo{
 		txs: make(map[string]*domain.Transaction),
 	}
 }
 
-func (tr *InMemoryTxRepo) AddTx(tx *domain.Transaction) error {
+func (tr *txRepo) AddTx(tx *domain.Transaction) error {
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
 	tr.txs[tx.Hash] = tx
 	return nil
 }
 
-func (tr *InMemoryTxRepo) GetTx(hash string) (*domain.Transaction, error) {
+func (tr *txRepo) GetTx(hash string) (*domain.Transaction, error) {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 	return tr.txs[hash], nil
 }
 
-func (tr *InMemoryTxRepo) TxExist(hash string) bool {
+func (tr *txRepo) TxExist(hash string) bool {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
 	_, ok := tr.txs[hash]

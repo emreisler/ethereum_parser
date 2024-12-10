@@ -6,18 +6,18 @@ import (
 	"sync"
 )
 
-type subscriberRepository struct {
+type subscriberRepo struct {
 	subscribers map[string]*domain.Subscriber
 	mu          sync.RWMutex
 }
 
-func NewInMemorySubscriberRepository() SubscriberRepository {
-	return &subscriberRepository{
+func NewInMemorySubscriberRepo() SubscriberRepository {
+	return &subscriberRepo{
 		subscribers: make(map[string]*domain.Subscriber),
 	}
 }
 
-func (s *subscriberRepository) GetSubscribers() []string {
+func (s *subscriberRepo) GetSubscribers() []string {
 	var subscribersAddresses []string
 	for _, subscriber := range s.subscribers {
 		subscribersAddresses = append(subscribersAddresses, subscriber.Address)
@@ -25,14 +25,14 @@ func (s *subscriberRepository) GetSubscribers() []string {
 	return subscribersAddresses
 }
 
-func (s *subscriberRepository) SubscriberExists(address string) bool {
+func (s *subscriberRepo) SubscriberExists(address string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	_, ok := s.subscribers[address]
 	return ok
 }
 
-func (s *subscriberRepository) AddTxHash(address, hash string) error {
+func (s *subscriberRepo) AddTxHash(address, hash string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	subscriber, ok := s.subscribers[address]
@@ -45,7 +45,7 @@ func (s *subscriberRepository) AddTxHash(address, hash string) error {
 	return nil
 }
 
-func (s *subscriberRepository) AddSubscriber(address string) bool {
+func (s *subscriberRepo) AddSubscriber(address string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.subscribers[address] = &domain.Subscriber{
@@ -55,7 +55,7 @@ func (s *subscriberRepository) AddSubscriber(address string) bool {
 	return true
 }
 
-func (s *subscriberRepository) GetTxHashes(address string) map[string]struct{} {
+func (s *subscriberRepo) GetTxHashes(address string) map[string]struct{} {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.subscribers[address].TxHashes

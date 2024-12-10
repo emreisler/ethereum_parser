@@ -14,7 +14,7 @@ func main() {
 	// Initialize dependencies
 	ethClient := client.NewEthereumClient("https://ethereum-rpc.publicnode.com")
 	txRepo := repository.NewInMemoryTxRepo()
-	subscriberRepo := repository.NewInMemorySubscriberRepository()
+	subscriberRepo := repository.NewInMemorySubscriberRepo()
 	parser := usecases.NewEthereumParser(ethClient, txRepo, subscriberRepo)
 	handler := handlers.NewParserHandler(parser)
 
