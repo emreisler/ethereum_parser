@@ -15,3 +15,10 @@ type SubscriberRepository interface {
 	AddTxHash(address, hash string) error
 	GetTxHashes(address string) map[string]struct{}
 }
+
+type UpdatedSubscriberRepo interface {
+	SubscriberExists(address string) bool
+	AddSubscriber(address string) bool
+	AddTx(address string, tx *domain.Transaction)
+	GetTxHashes(address string) []domain.Transaction
+}

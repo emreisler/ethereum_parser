@@ -14,11 +14,17 @@ type ethParser struct {
 	ethClient      client.EthereumClient
 	txRepo         repository.TransactionRepository
 	subscriberRepo repository.SubscriberRepository
+	updatedSubRepo repository.UpdatedSubscriberRepo
 	currentBlock   int
 }
 
-func NewEthereumParser(ethClient client.EthereumClient, txRepo repository.TransactionRepository, subscriberRepo repository.SubscriberRepository) usecases.Parser {
-	p := &ethParser{ethClient: ethClient, txRepo: txRepo, subscriberRepo: subscriberRepo}
+func NewEthereumParser(ethClient client.EthereumClient, txRepo repository.TransactionRepository, subscriberRepo repository.SubscriberRepository, updatedSubRepo repository.UpdatedSubscriberRepo) usecases.Parser {
+	p := &ethParser{
+		ethClient:      ethClient,
+		txRepo:         txRepo,
+		subscriberRepo: subscriberRepo,
+		updatedSubRepo: updatedSubRepo,
+	}
 
 	p.currentBlock = p.GetCurrentBlock()
 	go p.handleBlockUpdates(p.watchLatestBlock())
@@ -35,26 +41,17 @@ func (p *ethParser) GetCurrentBlock() int {
 }
 
 func (p *ethParser) Subscribe(address string) bool {
-	p.subscriberRepo.AddSubscriber(address)
-	return true
+	return p.updatedSubRepo.AddSubscriber(address)
 }
 
 // GetTransactions return retrieved transactions belongs to given address
 // TODO It is not returning the transactions happened after last block update handling, so some new transactions are missing
 // but the purpose is notification so 5 second delay may be acceptable ?
 func (p *ethParser) GetTransactions(address string) []domain.Transaction {
-	if !p.subscriberRepo.SubscriberExists(address) {
+	if !p.updatedSubRepo.SubscriberExists(address) {
 		return nil
 	}
-	txHashes := p.subscriberRepo.GetTxHashes(address)
-
-	var transactions []domain.Transaction
-	for txHash := range txHashes {
-		tx, _ := p.txRepo.GetTx(txHash)
-		transactions = append(transactions, *tx)
-	}
-
-	return transactions
+	return p.updatedSubRepo.GetTxHashes(address)
 }
 
 // check last parsed block and populate storage with missing transactions
@@ -78,9 +75,6 @@ func (p *ethParser) populateTxsWithBlockRange(startBlock, endBlock int) {
 // populateTxs if current block
 // TODO name of the method does not say too much about the logic
 func (p *ethParser) populateTxs(block int) error {
-	if block == p.currentBlock {
-		return p.populateExistingBlock(block)
-	}
 	return p.populateNewBlock(block)
 }
 
@@ -108,36 +102,11 @@ func (p *ethParser) populateNewBlock(block int) error {
 	if err != nil {
 		return err
 	}
-
 	for _, tx := range txs {
-		//I should have been checked if tx belongs to any subscriber..
-		if !p.txRepo.TxExist(tx.Hash) {
-			p.txRepo.AddTx(tx)
-		}
-		p.addToObserver(tx)
-	}
-	return nil
-}
-
-// populateExistingBlock fetch just transaction hashes and retrieve complete transaction if the hash does not exist in storage
-// TODO starts with fetching just hashes bec, we are assuming we have most of the txs from this already scanned block
-// to be able to reduce the payload from eth node
-// looping through the hashes and fetch the tx details by using tx hash
-// downside is what if we couldn't retrieve most of the transactions so there will be too many requests one by one
-func (p *ethParser) populateExistingBlock(block int) error {
-	txHashes, err := p.ethClient.GetTxHashes(block)
-	if err != nil {
-		return err
-	}
-
-	for _, txHash := range txHashes {
-		if !p.txRepo.TxExist(txHash) {
-			tx, err := p.ethClient.GetTxByHash(txHash)
-			if err != nil {
-				return err
-			}
-			p.txRepo.AddTx(tx)
-			p.addToObserver(tx)
+		if p.updatedSubRepo.SubscriberExists(tx.From) {
+			p.updatedSubRepo.AddTx(tx.From, tx)
+		} else if p.updatedSubRepo.SubscriberExists(tx.To) {
+			p.updatedSubRepo.AddTx(tx.To, tx)
 		}
 	}
 	return nil

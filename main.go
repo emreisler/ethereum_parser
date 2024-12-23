@@ -15,7 +15,8 @@ func main() {
 	ethClient := client.NewEthereumClient("https://ethereum-rpc.publicnode.com")
 	txRepo := repository.NewInMemoryTxRepo()
 	subscriberRepo := repository.NewInMemorySubscriberRepo()
-	parser := parser.NewEthereumParser(ethClient, txRepo, subscriberRepo)
+	updatedSubscriberRepo := repository.NewUpdatedSubscriberRepo()
+	parser := parser.NewEthereumParser(ethClient, txRepo, subscriberRepo, updatedSubscriberRepo)
 	handler := handlers.NewParserHandler(parser)
 
 	// Define routes
